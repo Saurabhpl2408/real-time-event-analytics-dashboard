@@ -21,7 +21,7 @@ def consume_messages():
     for message in consumer:
         print("Received message", message.value)
 
-        threading.Thread(target=consume_messages, daemon=True).start()
+threading.Thread(target=consume_messages, daemon=True).start()
 
 @app.get("/ping")
 def ping():
