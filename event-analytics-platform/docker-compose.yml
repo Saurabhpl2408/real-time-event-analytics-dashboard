@@ -1,4 +1,27 @@
+version: '3.8'
+
 services:
+  # PostgreSQL with TimescaleDB extension
+  postgres:
+    image: timescale/timescaledb:latest-pg15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: analytics_user
+      POSTGRES_PASSWORD: analytics_pass
+      POSTGRES_DB: analytics_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U analytics_user -d analytics_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - analytics-network
+
   # Redpanda (Kafka-compatible message broker)
   redpanda:
     image: docker.redpanda.com/redpandadata/redpanda:v23.2.3
@@ -31,12 +54,15 @@ services:
     networks:
       - analytics-network
 
-  # Redis (for real-time storage and pub/sub)
+  # Redis (for caching and real-time pub/sub)
   redis:
     image: redis:7-alpine
     container_name: redis
+    command: redis-server --appendonly yes
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -45,7 +71,32 @@ services:
     networks:
       - analytics-network
 
-  # FastAPI Backend (Ingestion + WebSocket)
+  # n8n Workflow Automation
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin123
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=UTC
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/home/node/.n8n/workflows
+    depends_on:
+      - postgres
+      - redis
+      - redpanda
+    networks:
+      - analytics-network
+
+  # FastAPI Backend (Ingestion + WebSocket + API)
   backend:
     build:
       context: ./backend
@@ -58,7 +109,11 @@ services:
       - REDIS_PORT=6379
       - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
       - KAFKA_TOPIC=events.raw
+      - DATABASE_URL=postgresql://analytics_user:analytics_pass@postgres:5432/analytics_db
+      - ENVIRONMENT=development
     depends_on:
+      postgres:
+        condition: service_healthy
       redpanda:
         condition: service_healthy
       redis:
@@ -67,8 +122,9 @@ services:
       - analytics-network
     volumes:
       - ./backend/app:/app/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-  # Stream Consumer (Kafka -> Redis aggregation)
+  # Stream Consumer (Kafka -> PostgreSQL + Redis aggregation)
   consumer:
     build:
       context: ./backend
@@ -81,11 +137,17 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
       - KAFKA_TOPIC=events.raw
       - KAFKA_GROUP_ID=analytics-consumer-group
+      - DATABASE_URL=postgresql://analytics_user:analytics_pass@postgres:5432/analytics_db
+      - ENVIRONMENT=development
     depends_on:
+      postgres:
+        condition: service_healthy
       redpanda:
         condition: service_healthy
       redis:
         condition: service_healthy
+      backend:
+        condition: service_started
     networks:
       - analytics-network
     volumes:
@@ -100,6 +162,7 @@ services:
     environment:
       - BACKEND_URL=http://backend:8000
       - EVENTS_PER_SECOND=10
+      - EVENT_TYPES=page_view,click,purchase,signup
     depends_on:
       - backend
     networks:
@@ -113,10 +176,21 @@ services:
     container_name: frontend
     ports:
       - "3000:80"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_WS_URL=ws://localhost:8000
     depends_on:
       - backend
     networks:
       - analytics-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  n8n_data:
+    driver: local
 
 networks:
   analytics-network:

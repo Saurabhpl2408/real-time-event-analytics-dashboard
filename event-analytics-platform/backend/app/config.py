@@ -12,12 +12,32 @@ class Settings(BaseSettings):
     kafka_topic: str = os.getenv("KAFKA_TOPIC", "events.raw")
     kafka_group_id: str = os.getenv("KAFKA_GROUP_ID", "analytics-consumer-group")
     
+    # Database Configuration
+    database_url: str = os.getenv(
+        "DATABASE_URL",
+        "postgresql://analytics_user:analytics_pass@localhost:5432/analytics_db"
+    )
+    
     # Backend Configuration
     backend_host: str = os.getenv("BACKEND_HOST", "0.0.0.0")
     backend_port: int = int(os.getenv("BACKEND_PORT", "8000"))
     
     # Aggregation window (seconds)
     aggregation_window_seconds: int = 60
+    
+    # Environment
+    environment: str = os.getenv("ENVIRONMENT", "development")
+    
+    # API Configuration
+    api_v1_prefix: str = "/api/v1"
+    
+    # Pagination
+    default_page_size: int = 50
+    max_page_size: int = 1000
+    
+    # TimescaleDB Configuration
+    enable_timescaledb: bool = True
+    timescale_chunk_interval: str = "1 day"
     
     class Config:
         env_file = ".env"

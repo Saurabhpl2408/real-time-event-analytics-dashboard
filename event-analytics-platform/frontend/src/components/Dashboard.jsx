@@ -1,75 +1,127 @@
-import EventCounter from './EventCounter'
-import EventChart from './EventChart'
-import EventTypeDistribution from './EventTypeDistribution'
+import React, { useState, useEffect } from 'react';
+import Header from './Header';
+import MetricCard from './MetricCard';
+import RealtimeChart from './RealtimeChart';
+import EventChart from './EventChart';
+import SessionsTable from './SessionsTable';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { useStats } from '../hooks/useStats';
+import apiService from '../services/api';
 
-function Dashboard({ connected, totalEvents, eventsPerType, timeSeriesData }) {
+export default function Dashboard() {
+  const { data: wsData, connected } = useWebSocket();
+  const { stats, loading, error } = useStats(5000);
+  const [health, setHealth] = useState(null);
+
+  useEffect(() => {
+    // Fetch health status
+    const fetchHealth = async () => {
+      try {
+        const healthData = await apiService.getHealth();
+        setHealth(healthData);
+      } catch (err) {
+        console.error('Failed to fetch health:', err);
+      }
+    };
+
+    fetchHealth();
+    const interval = setInterval(fetchHealth, 10000); // Every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="spinner mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⚠️</div>
+          <p className="text-red-400 font-medium mb-2">Failed to load dashboard</p>
+          <p className="text-gray-500 text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">
-          Real-Time Analytics Dashboard
-        </h1>
-        <div className="flex items-center gap-2">
-          <div className={`w-3 h-3 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
-          <span className="text-sm text-gray-600">
-            {connected ? 'Connected' : 'Disconnected'}
-          </span>
-        </div>
-      </div>
+    <div className="min-h-screen p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <Header health={health} connected={connected} />
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <EventCounter 
-          title="Total Events"
-          count={totalEvents}
-          icon="📊"
-        />
-        <EventCounter 
-          title="Event Types"
-          count={Object.keys(eventsPerType).length}
-          icon="🏷️"
-        />
-        <EventCounter 
-          title="Data Points"
-          count={timeSeriesData.length}
-          icon="📈"
-        />
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Time Series Chart - Larger */}
-        <div className="lg:col-span-2">
-          <EventChart data={timeSeriesData} />
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <MetricCard
+            title="Total Events"
+            value={stats.total_events}
+            icon="📊"
+            trend={12}
+            color="blue"
+            subtitle="All time"
+          />
+          <MetricCard
+            title="Unique Sessions"
+            value={stats.unique_sessions}
+            icon="👥"
+            trend={8}
+            color="green"
+            subtitle="Last 24 hours"
+          />
+          <MetricCard
+            title="Unique Users"
+            value={stats.unique_users}
+            icon="🔥"
+            trend={-3}
+            color="yellow"
+            subtitle="Last 24 hours"
+          />
+          <MetricCard
+            title="Event Types"
+            value={Object.keys(stats.events_per_type || {}).length}
+            icon="🎯"
+            color="purple"
+            subtitle="Active"
+          />
         </div>
-        
-        {/* Event Type Distribution */}
-        <div className="lg:col-span-1">
-          <EventTypeDistribution data={eventsPerType} />
-        </div>
-      </div>
 
-      {/* Recent Activity */}
-      <div className="mt-8 bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
-          Event Breakdown
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {Object.entries(eventsPerType).map(([type, count]) => (
-            <div key={type} className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4">
-              <div className="text-sm text-gray-600 mb-1 capitalize">
-                {type.replace('_', ' ')}
-              </div>
-              <div className="text-2xl font-bold text-indigo-600">
-                {count.toLocaleString()}
-              </div>
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <RealtimeChart 
+            data={wsData} 
+            title="Real-time Event Stream"
+          />
+          <EventChart 
+            eventsPerType={stats.events_per_type}
+          />
+        </div>
+
+        {/* Recent Activity Table */}
+        <SessionsTable 
+          recentAggregations={stats.recent_aggregations || []}
+        />
+
+        {/* Live Updates Indicator */}
+        {connected && wsData && (
+          <div className="fixed bottom-8 right-8 glass rounded-lg px-4 py-2 animate-slideInRight">
+            <div className="flex items-center space-x-2">
+              <div className="status-dot bg-green-500" />
+              <span className="text-sm text-white">
+                Live update: {wsData.event_type}
+              </span>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
-  )
+  );
 }
-
-export default Dashboard
