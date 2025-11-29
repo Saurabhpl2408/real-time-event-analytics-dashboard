@@ -17,6 +17,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application
 COPY . .
 
+# Create directory for tag manager (if not exists)
+RUN mkdir -p /app/tag-manager/core /app/tag-manager/adaptors
+
 # Expose port
 EXPOSE 8000
 
