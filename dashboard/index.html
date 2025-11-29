@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Analytics Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        .links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+        .link-card {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 30px 20px;
+            border-radius: 15px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        .link-card:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        .link-card h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .link-card p {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 0;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            background: rgba(16, 185, 129, 0.8);
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+        .emoji {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status">✅ System Online</div>
+        <h1>🚀 Custom Analytics Platform</h1>
+        <p>Schema-driven, multi-adaptor analytics with Grafana visualization</p>
+        
+        <div class="links">
+            <a href="http://localhost:8000/docs" target="_blank" class="link-card">
+                <div class="emoji">📚</div>
+                <h3>API Docs</h3>
+                <p>Interactive API documentation</p>
+            </a>
+            
+            <a href="http://localhost:3001" target="_blank" class="link-card">
+                <div class="emoji">📊</div>
+                <h3>Grafana</h3>
+                <p>Analytics dashboards</p>
+            </a>
+            
+            <a href="http://localhost:8000/health" target="_blank" class="link-card">
+                <div class="emoji">💚</div>
+                <h3>Health Check</h3>
+                <p>System status</p>
+            </a>
+            
+            <a href="http://localhost:8000/api/schemas" target="_blank" class="link-card">
+                <div class="emoji">📋</div>
+                <h3>Schemas</h3>
+                <p>View all schemas</p>
+            </a>
+            
+            <a href="http://localhost:8000/api/adaptors" target="_blank" class="link-card">
+                <div class="emoji">🏷️</div>
+                <h3>Adaptors</h3>
+                <p>View all adaptors</p>
+            </a>
+            
+            <a href="http://localhost:8000/api/events/stats" target="_blank" class="link-card">
+                <div class="emoji">📈</div>
+                <h3>Event Stats</h3>
+                <p>Real-time statistics</p>
+            </a>
+        </div>
+        
+        <div style="margin-top: 40px; opacity: 0.7; font-size: 0.9em;">
+            <p>📖 For detailed documentation, visit the API docs</p>
+            <p>🔐 Grafana credentials: admin / admin123</p>
+        </div>
+    </div>
+</body>
+</html>

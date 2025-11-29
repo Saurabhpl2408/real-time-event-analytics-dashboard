@@ -31,7 +31,7 @@ class EventLog(Base):
     
     # Data (stored as JSONB for fast queries)
     properties = Column(JSONB, default={})
-    metadata = Column(JSONB, default={})
+    event_metadata = Column(JSONB, default={})  # CHANGED: metadata -> event_metadata
     
     # Container info
     container_id = Column(String(50), index=True)
@@ -49,7 +49,7 @@ class EventLog(Base):
             "session_id": self.session_id,
             "timestamp": self.timestamp.isoformat() if self.timestamp else None,
             "properties": self.properties,
-            "metadata": self.metadata,
+            "metadata": self.event_metadata,  # Return as 'metadata' for API compatibility
             "container_id": self.container_id,
             "processed": self.processed
         }

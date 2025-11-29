@@ -74,13 +74,13 @@ async def ingest_event(
             "session_id": event.session_id,
             "timestamp": event.timestamp,
             "properties": event.properties,
-            "metadata": event_metadata
+            "event_metadata": event_metadata
         }
         
         # Store in schema-specific table
         await SchemaEngine.insert_event(db, event.schema_id, full_event_data)
         
-        # Store in master event log
+      # Store in master event log
         event_log = EventLog(
             event_id=event_id,
             schema_id=event.schema_id,
@@ -89,7 +89,7 @@ async def ingest_event(
             session_id=event.session_id,
             timestamp=event.timestamp,
             properties=event.properties,
-            metadata=event_metadata,
+            event_metadata=event_metadata,  
             container_id=event.properties.get("container_id"),
             processed=1
         )
@@ -106,7 +106,7 @@ async def ingest_event(
             "session_id": event.session_id,
             "timestamp": event.timestamp.isoformat(),
             "properties": event.properties,
-            "metadata": event_metadata
+            "metadata": event_metadata  
         }
         
         await kafka_producer.send_event(settings.kafka_topic_events, kafka_event)
