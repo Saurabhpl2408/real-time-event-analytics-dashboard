@@ -15,7 +15,7 @@ from app.schemas_pydantic import (
 )
 from app.config import settings
 
-router = APIRouter(prefix="/adaptors", tags=["adaptors"])
+router = APIRouter(prefix="/adaptors", tags=["adaptors"], redirect_slashes=True)
 
 
 @router.post("/", response_model=AdaptorResponse, status_code=201)

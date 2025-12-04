@@ -13,7 +13,7 @@ from app.schemas_pydantic import (
     SchemaListResponse
 )
 
-router = APIRouter(prefix="/schemas", tags=["schemas"])
+router = APIRouter(prefix="/schemas", tags=["schemas"], redirect_slashes=True)
 
 
 @router.post("/", response_model=SchemaResponse, status_code=201)

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Tracking Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .section {
+            background: white;
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button, a {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px 5px;
+            text-decoration: none;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover, a:hover {
+            background: #5568d3;
+        }
+        .project {
+            display: inline-block;
+            padding: 20px;
+            margin: 10px;
+            background: #f9f9f9;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        #console {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            height: 300px;
+            overflow-y: auto;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .console-line {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        .event-success {
+            color: #00ff00;
+        }
+        .event-info {
+            color: #00bfff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Portfolio Analytics Test Page</h1>
+    <p><strong>Container ID:</strong> CAP-7930DE919BE0555E</p>
+
+    <div class="section">
+        <h2>📧 Contact Links</h2>
+        <a href="mailto:saurabh@example.com">Email Me</a>
+        <a href="tel:+1234567890">Call Me</a>
+        <a href="#contact">Get in Touch</a>
+    </div>
+
+    <div class="section">
+        <h2>📄 Resume & Profiles</h2>
+        <a href="./Saurabh_Lohokare_Resume.pdf" download>Download Resume</a>
+        <a href="https://linkedin.com/in/yourprofile" target="_blank">LinkedIn Profile</a>
+        <a href="https://linkedin.com/in/yourprofile/recommendations" target="_blank">LinkedIn Recommendations</a>
+        <a href="https://github.com/yourusername" target="_blank">GitHub Profile</a>
+    </div>
+
+    <div class="section">
+        <h2>🚀 GitHub Projects</h2>
+        <a href="https://github.com/yourusername/project1" target="_blank">AI Chatbot Project</a>
+        <a href="https://github.com/yourusername/analytics-platform" target="_blank">Analytics Platform</a>
+        <a href="https://github.com/yourusername/ml-model" target="_blank">ML Model</a>
+    </div>
+
+    <div class="section">
+        <h2>📚 Publications</h2>
+        <a href="https://www.ijcrt.org/papers/IJCRT123456.pdf" target="_blank">IJCRT Paper</a>
+    </div>
+
+    <div class="section">
+        <h2>📊 Event Console (Live)</h2>
+        <div id="console">
+            <div class="console-line event-info">Waiting for events...</div>
+        </div>
+    </div>
+
+    <!-- ANALYTICS TAG -->
+    <script src="http://localhost:8000/tag/CAP-7930DE919BE0555E.js" async></script>
+
+    <!-- MONITORING SCRIPT -->
+    <script>
+        const consoleDiv = document.getElementById('console');
+        
+        // Override console.log to display events
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            
+            const message = args.join(' ');
+            if (message.includes('[Portfolio Adaptor]') || message.includes('[CustomAnalytics]')) {
+                const line = document.createElement('div');
+                line.className = 'console-line event-success';
+                line.textContent = new Date().toLocaleTimeString() + ' - ' + message;
+                consoleDiv.appendChild(line);
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            }
+        };
+
+        // Check if tracker loaded
+        setTimeout(() => {
+            if (window.CustomAnalytics) {
+                const line = document.createElement('div');
+                line.className = 'console-line event-success';
+                line.textContent = '✅ CustomAnalytics is loaded and ready!';
+                consoleDiv.appendChild(line);
+            } else {
+                const line = document.createElement('div');
+                line.className = 'console-line';
+                line.style.color = '#ff0000';
+                line.textContent = '❌ CustomAnalytics failed to load';
+                consoleDiv.appendChild(line);
+            }
+        }, 2000);
+
+        // Display events in real-time
+        setInterval(() => {
+            fetch('http://localhost:8000/api/events/stats')
+                .then(r => r.json())
+                .then(data => {
+                    document.querySelector('p strong').nextSibling.textContent = 
+                        ` | Total Events: ${data.total_events} | Recent: ${data.recent_events}`;
+                })
+                .catch(e => console.error('Stats fetch failed:', e));
+        }, 3000);
+    </script>
+</body>
+</html>

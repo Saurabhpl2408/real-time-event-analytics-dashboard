@@ -13,7 +13,7 @@ from app.models.events import EventLog
 from app.schemas_pydantic import EventIngest, EventResponse, EventStatsResponse
 from app.config import settings
 
-router = APIRouter(prefix="/events", tags=["events"])
+router = APIRouter(prefix="/events", tags=["events"], redirect_slashes=True)
 
 
 @router.post("/ingest", response_model=EventResponse)

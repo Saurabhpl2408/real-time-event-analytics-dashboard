@@ -91,13 +91,9 @@ async def health_check():
 
 async def build_tag_script(adaptor) -> str:
     """
-    Build the complete tag manager script by combining:
-    1. Core tracker
-    2. Container configuration
-    3. Custom adaptor code
+    Build the complete tag manager script
     """
     
-    # Path to tag manager files
     tag_manager_dir = "/app/tag-manager"
     
     # Read core tracker
@@ -121,7 +117,6 @@ async def build_tag_script(adaptor) -> str:
     if adaptor.custom_code:
         custom_code = adaptor.custom_code
     else:
-        # Try to load default adaptor
         adaptor_file = f"{adaptor.schema_id}-adaptor.js"
         adaptor_path = os.path.join(tag_manager_dir, "adaptors", adaptor_file)
         
@@ -129,21 +124,21 @@ async def build_tag_script(adaptor) -> str:
             with open(adaptor_path, 'r') as f:
                 custom_code = f.read()
     
-    # Replace placeholders
+    # Replace placeholders (FIXED - no extra quotes)
     container_code = container_template.replace(
-        'PLACEHOLDER_CONTAINER_ID', 
+        '"PLACEHOLDER_CONTAINER_ID"',  # CHANGED: Added quotes in placeholder
         f'"{adaptor.container_id}"'
     ).replace(
-        'PLACEHOLDER_SCHEMA_ID', 
+        '"PLACEHOLDER_SCHEMA_ID"',     # CHANGED: Added quotes in placeholder
         f'"{adaptor.schema_id}"'
     ).replace(
-        'PLACEHOLDER_API_URL', 
+        '"PLACEHOLDER_API_URL"',       # CHANGED: Added quotes in placeholder
         f'"{settings.tag_manager_base_url}"'
     ).replace(
-        'PLACEHOLDER_TRACKING_RULES', 
+        'PLACEHOLDER_TRACKING_RULES',  # This is fine (no quotes needed)
         json.dumps(adaptor.tracking_rules)
     ).replace(
-        'PLACEHOLDER_DEBUG', 
+        'PLACEHOLDER_DEBUG',           # This is fine (no quotes needed)
         'true' if settings.environment == 'development' else 'false'
     ).replace(
         'PLACEHOLDER_CUSTOM_CODE',
