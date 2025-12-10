@@ -1,0 +1,27 @@
+services:
+  # Backend API
+  - type: web
+    name: analytics-backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: KAFKA_ENABLED
+        value: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: analytics-db
+          property: connectionString
+      - key: TAG_MANAGER_BASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        value: "*"
+    healthCheckPath: /health
+
+databases:
+  - name: analytics-db
+    databaseName: analytics_db
+    user: analytics
+    plan: free
