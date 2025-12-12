@@ -1,5 +1,6 @@
 import os
 from pydantic_settings import BaseSettings
+from typing import List
 
 
 class Settings(BaseSettings):
@@ -22,11 +23,20 @@ class Settings(BaseSettings):
     kafka_topic_events: str = "analytics.events"
     kafka_enabled: bool = os.getenv("KAFKA_ENABLED", "false").lower() == "true"
     
-    # CORS
-    cors_origins: list = ["*"] if os.getenv("CORS_ORIGINS") == "*" else os.getenv("CORS_ORIGINS", "").split(",")
+    # CORS - FIXED
+    cors_origins: List[str] = ["*"]  # Default to allow all
     
     # Tag Manager
     tag_manager_base_url: str = os.getenv("TAG_MANAGER_BASE_URL", "http://localhost:8000")
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Parse CORS_ORIGINS from environment
+        cors_env = os.getenv("CORS_ORIGINS")
+        if cors_env and cors_env != "*":
+            self.cors_origins = [origin.strip() for origin in cors_env.split(",")]
+        elif cors_env == "*":
+            self.cors_origins = ["*"]
     
     class Config:
         env_file = ".env"

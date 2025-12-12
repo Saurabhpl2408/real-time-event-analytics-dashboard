@@ -10,18 +10,18 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
-COPY backend/requirements.txt .
+COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY backend/app/ /app/app/
+COPY app/ /app/app/
 
-# Copy tag-manager files
-COPY tag-manager/ /app/tag-manager/
+# Create directory for tag-manager (will be mounted as volume)
+RUN mkdir -p /app/tag-manager/core /app/tag-manager/adaptors
 
-# Expose port (Render uses PORT env variable)
+# Expose port
 EXPOSE 8000
 
 # Health check
@@ -29,4 +29,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
 # Run application
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
