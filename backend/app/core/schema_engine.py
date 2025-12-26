@@ -62,6 +62,32 @@ class SchemaEngine:
                 "session_id": event_data.get("session_id"),
                 "timestamp": event_data.get("timestamp"),
                 "properties": json.dumps(event_data.get("properties", {})),
+                "metadata": json.dumps(event_data.get("metadata", {}))  # Use 'metadata' key
+            }
+        )
+        
+        await db.commit()
+        return result.fetchone()[0]
+    
+        """Insert event into schema-specific table"""
+        table_name = f"events_{schema_name}"
+        
+        insert_sql = text(f"""
+        INSERT INTO {table_name} 
+        (event_type, user_id, session_id, timestamp, properties, metadata)
+        VALUES 
+        (:event_type, :user_id, :session_id, :timestamp, :properties, :metadata)
+        RETURNING id
+        """)
+        
+        result = await db.execute(
+            insert_sql,
+            {
+                "event_type": event_data.get("event_type"),
+                "user_id": event_data.get("user_id"),
+                "session_id": event_data.get("session_id"),
+                "timestamp": event_data.get("timestamp"),
+                "properties": json.dumps(event_data.get("properties", {})),
                 "metadata": json.dumps(event_data.get("metadata", {}))
             }
         )
@@ -71,29 +97,38 @@ class SchemaEngine:
     
     @staticmethod
     def validate_event_against_schema(event_data: Dict[str, Any], schema_properties: Dict[str, Any]) -> tuple[bool, str]:
-        """Validate event data against schema definition"""
+        """
+        Validate event data against schema definition
+        Flexible validation - only checks if event type exists
+        Allows extra properties from tag manager (tracked_at, page_url, etc.)
+        """
         event_type = event_data.get("event_type")
-        properties = event_data.get("properties", {})
         
         # Check if event type exists in schema
         if event_type not in schema_properties:
             return False, f"Event type '{event_type}' not defined in schema"
         
-        # Validate properties
+        # If schema properties for this event type is empty dict, allow all properties
+        if not schema_properties[event_type]:
+            return True, "Valid"
+        
+        # Otherwise, validate only the properties defined in schema
+        # But allow extra properties that aren't defined
+        properties = event_data.get("properties", {})
         expected_props = schema_properties[event_type]
         
         for prop_name, prop_type in expected_props.items():
             if prop_name in properties:
-                # Basic type validation
                 value = properties[prop_name]
                 
+                # Basic type validation (only for defined properties)
                 if prop_type == "string" and not isinstance(value, str):
-                    return False, f"Property '{prop_name}' should be string"
+                    return False, f"Property '{prop_name}' should be string, got {type(value).__name__}"
                 elif prop_type == "number" and not isinstance(value, (int, float)):
-                    return False, f"Property '{prop_name}' should be number"
+                    return False, f"Property '{prop_name}' should be number, got {type(value).__name__}"
                 elif prop_type == "boolean" and not isinstance(value, bool):
-                    return False, f"Property '{prop_name}' should be boolean"
+                    return False, f"Property '{prop_name}' should be boolean, got {type(value).__name__}"
                 elif prop_type == "array" and not isinstance(value, list):
-                    return False, f"Property '{prop_name}' should be array"
+                    return False, f"Property '{prop_name}' should be array, got {type(value).__name__}"
         
         return True, "Valid"

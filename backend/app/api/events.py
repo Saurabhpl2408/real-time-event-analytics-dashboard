@@ -12,7 +12,9 @@ from app.models.adaptors import Adaptor
 from app.models.events import EventLog
 from app.schemas_pydantic import EventIngest, EventResponse, EventStatsResponse
 from app.config import settings
+import logging
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/events", tags=["events"], redirect_slashes=True)
 
 
@@ -74,13 +76,13 @@ async def ingest_event(
             "session_id": event.session_id,
             "timestamp": event.timestamp,
             "properties": event.properties,
-            "event_metadata": event_metadata
+            "metadata": event_metadata  # Use 'metadata' here for schema table
         }
         
-        # Store in schema-specific table
+        # Store in schema-specific table FIRST
         await SchemaEngine.insert_event(db, event.schema_id, full_event_data)
         
-      # Store in master event log
+        # Store in master event log (same session, after schema table succeeds)
         event_log = EventLog(
             event_id=event_id,
             schema_id=event.schema_id,
@@ -89,38 +91,43 @@ async def ingest_event(
             session_id=event.session_id,
             timestamp=event.timestamp,
             properties=event.properties,
-            event_metadata=event_metadata,  
+            event_metadata=event_metadata,
             container_id=event.properties.get("container_id"),
             processed=1
         )
         
         db.add(event_log)
-        await db.commit()
+        await db.commit()  # Commit both tables together
         
-        # Send to Kafka for further processing
-        kafka_event = {
-            "event_id": event_id,
-            "schema_id": event.schema_id,
-            "event_type": event.event_type,
-            "user_id": event.user_id,
-            "session_id": event.session_id,
-            "timestamp": event.timestamp.isoformat(),
-            "properties": event.properties,
-            "metadata": event_metadata  
-        }
+        # Send to Kafka (non-blocking)
+        try:
+            kafka_event = {
+                "event_id": event_id,
+                "schema_id": event.schema_id,
+                "event_type": event.event_type,
+                "user_id": event.user_id,
+                "session_id": event.session_id,
+                "timestamp": event.timestamp.isoformat(),
+                "properties": event.properties,
+                "metadata": event_metadata
+            }
+            await kafka_producer.send_event(settings.kafka_topic_events, kafka_event)
+        except Exception as kafka_error:
+            logger.warning(f"Kafka send failed (non-critical): {kafka_error}")
         
-        await kafka_producer.send_event(settings.kafka_topic_events, kafka_event)
-        
-        # Update adaptor stats if container_id present
-        if event.properties.get("container_id"):
-            container_id = event.properties["container_id"]
-            result = await db.execute(
-                select(Adaptor).where(Adaptor.container_id == container_id)
-            )
-            adaptor = result.scalar_one_or_none()
-            if adaptor:
-                adaptor.total_events["count"] = adaptor.total_events.get("count", 0) + 1
-                await db.commit()
+        # Update adaptor stats (non-critical)
+        try:
+            if event.properties.get("container_id"):
+                container_id = event.properties["container_id"]
+                result = await db.execute(
+                    select(Adaptor).where(Adaptor.container_id == container_id)
+                )
+                adaptor = result.scalar_one_or_none()
+                if adaptor:
+                    adaptor.total_events["count"] = adaptor.total_events.get("count", 0) + 1
+                    await db.commit()
+        except Exception as adaptor_error:
+            logger.warning(f"Failed to update adaptor stats: {adaptor_error}")
         
         return EventResponse(
             status="success",
@@ -132,8 +139,9 @@ async def ingest_event(
         raise
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to ingest event: {str(e)}")
-
+        logger.error(f"INGESTION ERROR: {str(e)}", exc_info=True)
+        logger.error(f"Event data: schema_id={event.schema_id}, event_type={event.event_type}")
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
 
 @router.get("/stats", response_model=EventStatsResponse)
 async def get_event_stats(

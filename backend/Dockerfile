@@ -9,17 +9,17 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements from backend directory
-COPY backend/requirements.txt ./requirements.txt
+# Copy requirements
+COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY backend/app ./app
+COPY app/ /app/app/
 
-# Copy tag-manager files
-COPY tag-manager ./tag-manager
+# Create directory for tag-manager (will be mounted as volume)
+RUN mkdir -p /app/tag-manager/core /app/tag-manager/adaptors
 
 # Expose port
 EXPOSE 8000

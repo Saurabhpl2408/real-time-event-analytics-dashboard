@@ -1,13 +1,12 @@
 /**
  * Portfolio Adaptor - Saurabh Lohokare
- * Optimized version with single click listener
- * Custom tracking for https://saurabh-lohokare-portfolio.vercel.app
+ * Click tracking only - no scroll tracking
  */
 
 (function() {
   'use strict';
 
-  console.log('[Portfolio Adaptor] Initializing for Saurabh Lohokare Portfolio...');
+  console.log('[Portfolio Adaptor] Initializing...');
 
   function getInnerText(element) {
     if (!element) return '';
@@ -29,12 +28,8 @@
   }
 
   function extractGitHubInfo(href) {
-    if (!href || !href.includes('github.com/')) {
-      return null;
-    }
-
+    if (!href || !href.includes('github.com/')) return null;
     const parts = href.split('github.com/')[1]?.split('/').filter(p => p);
-    
     if (!parts || parts.length === 0) return null;
 
     return {
@@ -121,7 +116,6 @@
 
       case lowerHref.includes('github.com/'):
         const githubInfo = extractGitHubInfo(href);
-        
         if (githubInfo) {
           if (githubInfo.isProject) {
             trackEvent('github_project_click', {
@@ -163,67 +157,10 @@
     }
   }
 
-  let maxScrollDepth = 0;
-  const scrollMilestones = [25, 50, 75, 100];
-  const trackedMilestones = {};
-
-  function handleScroll() {
-    const windowHeight = window.innerHeight;
-    const documentHeight = document.documentElement.scrollHeight;
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    
-    const scrollPercent = Math.round(((scrollTop + windowHeight) / documentHeight) * 100);
-    
-    if (scrollPercent > maxScrollDepth) {
-      maxScrollDepth = scrollPercent;
-      
-      scrollMilestones.forEach(function(milestone) {
-        if (maxScrollDepth >= milestone && !trackedMilestones[milestone]) {
-          trackedMilestones[milestone] = true;
-          
-          trackEvent('scroll_depth', {
-            depth_percent: milestone,
-            page: window.location.pathname
-          });
-        }
-      });
-    }
-  }
-
-  let pageLoadTime = Date.now();
-
-  function handlePageDuration() {
-    const timeSpent = Math.round((Date.now() - pageLoadTime) / 1000);
-    
-    if (timeSpent > 5) {
-      trackEvent('page_duration', {
-        duration_seconds: timeSpent,
-        page: window.location.pathname,
-        page_title: document.title
-      });
-    }
-  }
-
   function initializeTracking() {
-    console.log('[Portfolio Adaptor] Setting up centralized event listener...');
-
+    console.log('[Portfolio Adaptor] Setting up click tracking...');
     document.addEventListener('click', handleClick, true);
-
-    let scrollTimeout;
-    window.addEventListener('scroll', function() {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(handleScroll, 300);
-    });
-
-    window.addEventListener('beforeunload', handlePageDuration);
-    
-    document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'hidden') {
-        handlePageDuration();
-      }
-    });
-
-    console.log('[Portfolio Adaptor] ✅ Tracking initialized');
+    console.log('[Portfolio Adaptor] ✅ Click tracking active (no scroll tracking)');
   }
 
   if (document.readyState === 'loading') {

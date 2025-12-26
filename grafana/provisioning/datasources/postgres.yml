@@ -8,9 +8,9 @@ datasources:
     database: analytics_db
     user: analytics
     secureJsonData:
-      password: analytics123
+      password: 'analytics123'
     jsonData:
-      sslmode: disable
+      sslmode: 'disable'
       postgresVersion: 1500
       timescaledb: false
     isDefault: true
