@@ -8,6 +8,7 @@ from datetime import datetime
 import logging
 import json
 import os
+from app.api import schemas, adaptors, events, auth, export
 
 from app.config import settings, CORS_ORIGINS
 from app.core.database import init_db, get_db
@@ -222,3 +223,5 @@ async def tag_options(container_id: str):
 app.include_router(schemas.router, prefix="/api")
 app.include_router(adaptors.router, prefix="/api")
 app.include_router(events.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")
+app.include_router(export.router, prefix="/api")

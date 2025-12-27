@@ -105,12 +105,14 @@ services:
     container_name: analytics-dashboard
     ports:
       - "${DASHBOARD_PORT:-3000}:80"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
     depends_on:
       - backend
     networks:
       - analytics-network
     restart: unless-stopped
-
+    
 volumes:
   postgres_data:
     driver: local

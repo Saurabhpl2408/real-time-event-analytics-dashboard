@@ -16,18 +16,17 @@ from app.schemas_pydantic.event import (
     EventResponse,
     EventStatsResponse
 )
+from app.schemas_pydantic.auth import (
+    UserCreate,
+    UserLogin,
+    UserResponse,
+    TokenResponse,
+    APIKeyResponse
+)
 
 __all__ = [
-    "SchemaCreate",
-    "SchemaUpdate",
-    "SchemaResponse",
-    "SchemaListResponse",
-    "AdaptorCreate",
-    "AdaptorUpdate",
-    "AdaptorResponse",
-    "AdaptorListResponse",
-    "ContainerCodeResponse",
-    "EventIngest",
-    "EventResponse",
-    "EventStatsResponse"
+    "SchemaCreate", "SchemaUpdate", "SchemaResponse", "SchemaListResponse",
+    "AdaptorCreate", "AdaptorUpdate", "AdaptorResponse", "AdaptorListResponse", "ContainerCodeResponse",
+    "EventIngest", "EventResponse", "EventStatsResponse",
+    "UserCreate", "UserLogin", "UserResponse", "TokenResponse", "APIKeyResponse"
 ]
