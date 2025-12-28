@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useAuthStore } from '@/stores/authStore'
-import apiService from '@/services/api'
-import AdaptorCard from '@/components/adaptors/AdaptorCard'
-import CreateAdaptorModal from '@/components/adaptors/CreateAdaptorModal'
+import { useAuthStore } from './../stores/authStore'
+import apiService from './../services/api'
+import AdaptorCard from './../components/adaptors/AdaptorCard'
+import CreateAdaptorModal from './../modals/CreateAdaptorModal'
 import { Plus } from 'lucide-react'
 
 export default function Adaptors() {

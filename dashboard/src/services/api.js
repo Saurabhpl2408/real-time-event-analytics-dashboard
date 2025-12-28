@@ -138,16 +138,18 @@ class ApiService {
   }
 
   // Events
-  async getEventStats(token, schemaId = null) {
-    const params = schemaId ? `?schema_id=${schemaId}` : ''
-    return this.request(`/events/stats${params}`, {}, token)
-  }
+  async getEventStats(token, schemaId = null, days = 7) {
+  const params = new URLSearchParams()
+  if (schemaId) params.append('schema_id', schemaId)
+  if (days) params.append('days', days)
+  return this.request(`/events/stats?${params}`, {}, token)
+  } 
 
   async getRecentEvents(token, schemaId = null, limit = 50) {
-    const params = new URLSearchParams()
-    if (schemaId) params.append('schema_id', schemaId)
-    if (limit) params.append('limit', limit)
-    return this.request(`/events/recent?${params}`, {}, token)
+  const params = new URLSearchParams()
+  if (schemaId) params.append('schema_id', schemaId)
+  if (limit) params.append('limit', limit)
+  return this.request(`/events/recent?${params}`, {}, token)
   }
 
   // Export

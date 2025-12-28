@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useAuthStore } from '@/stores/authStore'
-import apiService from '@/services/api'
-import SchemaCard from '@/components/schemas/SchemaCard'
+import { useAuthStore } from './../stores/authStore'
+import apiService from './../services/api'
+import SchemaCard from './../components/schemas/SchemaCard'
+import CreateSchemaModal from './../modals/CreateSchemaModal'
 import { Plus, AlertCircle } from 'lucide-react'
 
 export default function Schemas() {
   const token = useAuthStore((state) => state.token)
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['schemas'],
@@ -52,7 +55,10 @@ export default function Schemas() {
           </p>
         </div>
 
-        <button className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl">
+        <button 
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl"
+        >
           <Plus className="w-5 h-5" />
           <span>New Schema</span>
         </button>
@@ -66,7 +72,7 @@ export default function Schemas() {
             Schema Builder
           </h3>
           <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-            Visual schema builder coming soon. For now, use the API to create and manage schemas.
+            Visual schema builder coming soon. For now, use the form to create schemas.
           </p>
         </div>
       </div>
@@ -87,6 +93,17 @@ export default function Schemas() {
             />
           ))}
         </div>
+      )}
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <CreateSchemaModal 
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
+            setShowCreateModal(false)
+            refetch()
+          }}
+        />
       )}
     </div>
   )

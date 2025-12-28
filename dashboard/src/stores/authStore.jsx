@@ -3,16 +3,25 @@ import { persist } from 'zustand/middleware'
 
 export const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       token: null,
       user: null,
+      isAuthenticated: false,
       
-      setAuth: (token, user) => set({ token, user }),
+      setAuth: (token, user) => set({ 
+        token, 
+        user, 
+        isAuthenticated: true 
+      }),
       
-      logout: () => set({ token: null, user: null }),
+      logout: () => set({ 
+        token: null, 
+        user: null, 
+        isAuthenticated: false 
+      }),
       
       isAdmin: () => {
-        const state = useAuthStore.getState()
+        const state = get()
         return state.user?.role === 'admin'
       },
     }),

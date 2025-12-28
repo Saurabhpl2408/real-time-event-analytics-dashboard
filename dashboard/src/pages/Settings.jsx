@@ -1,8 +1,24 @@
-import { useAuthStore } from '@/stores/authStore'
+import { useState } from 'react'
+import { useAuthStore } from './../stores/authStore'
 import { User, Key, Shield } from 'lucide-react'
+import ChangePasswordModal from './../modals/ChangePasswordModal'
+import Setup2FAModal from './../modals/Setup2FAModal'
+import apiService from './../services/api'
 
 export default function Settings() {
   const user = useAuthStore((state) => state.user)
+  const token = useAuthStore((state) => state.token)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [show2FAModal, setShow2FAModal] = useState(false)
+
+  const handleGenerateApiKey = async () => {
+    try {
+      const result = await apiService.generateApiKey(token)
+      alert(`API Key generated: ${result.apiKey}\n\nPlease save this key securely. You won't be able to see it again.`)
+    } catch (error) {
+      alert('Failed to generate API key: ' + error.message)
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -57,7 +73,10 @@ export default function Settings() {
           Use API keys for programmatic access to the analytics platform
         </p>
 
-        <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium rounded-lg transition-all">
+        <button 
+          onClick={handleGenerateApiKey}
+          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium rounded-lg transition-all"
+        >
           Generate New API Key
         </button>
       </div>
@@ -72,17 +91,31 @@ export default function Settings() {
         </div>
 
         <div className="space-y-3">
-          <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+          <button 
+            onClick={() => setShowPasswordModal(true)}
+            className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
             <p className="font-medium text-gray-900 dark:text-white">Change Password</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Update your password</p>
           </button>
           
-          <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+          <button 
+            onClick={() => setShow2FAModal(true)}
+            className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
             <p className="font-medium text-gray-900 dark:text-white">Two-Factor Authentication</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Add an extra layer of security</p>
           </button>
         </div>
       </div>
+
+      {/* Modals */}
+      {showPasswordModal && (
+        <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
+      )}
+      {show2FAModal && (
+        <Setup2FAModal onClose={() => setShow2FAModal(false)} />
+      )}
     </div>
   )
 }
