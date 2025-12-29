@@ -146,12 +146,12 @@ async def ingest_event(
 @router.get("/stats", response_model=EventStatsResponse)
 async def get_event_stats(
     schema_id: str = None,
-    hours: int = 24,
+    days: int = 7,
     db: AsyncSession = Depends(get_db)
 ):
     """Get event statistics"""
     try:
-        time_filter = datetime.utcnow() - timedelta(hours=hours)
+        time_filter = datetime.utcnow() - timedelta(days=days)
         
         # Total events
         query = select(func.count(EventLog.id))
@@ -185,6 +185,23 @@ async def get_event_stats(
         result = await db.execute(query)
         events_by_type = {row[0]: row[1] for row in result.fetchall()}
         
+        # Calculate page views
+        page_views = sum(count for event_type, count in events_by_type.items() 
+                        if 'page_view' in event_type.lower())
+        
+        # Calculate clicks
+        clicks = sum(count for event_type, count in events_by_type.items() 
+                    if 'click' in event_type.lower())
+        
+        # Unique sessions
+        query = select(func.count(func.distinct(EventLog.session_id)))
+        if schema_id:
+            query = query.where(EventLog.schema_id == schema_id)
+        query = query.where(EventLog.timestamp >= time_filter)
+        
+        result = await db.execute(query)
+        unique_sessions = result.scalar() or 0
+        
         # Recent events (last hour)
         recent_time = datetime.utcnow() - timedelta(hours=1)
         query = select(func.count(EventLog.id)).where(EventLog.timestamp >= recent_time)
@@ -198,13 +215,14 @@ async def get_event_stats(
             total_events=total_events,
             events_by_schema=events_by_schema,
             events_by_type=events_by_type,
-            recent_events=recent_events
+            recent_events=recent_events,
+            page_views=page_views,
+            clicks=clicks,
+            unique_sessions=unique_sessions
         )
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get stats: {str(e)}")
-
-
 @router.get("/recent")
 async def get_recent_events(
     schema_id: str = None,

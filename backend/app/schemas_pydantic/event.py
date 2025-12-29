@@ -28,3 +28,6 @@ class EventStatsResponse(BaseModel):
     events_by_schema: Dict[str, int]
     events_by_type: Dict[str, int]
     recent_events: int
+    page_views: int = 0
+    clicks: int = 0
+    unique_sessions: int = 0

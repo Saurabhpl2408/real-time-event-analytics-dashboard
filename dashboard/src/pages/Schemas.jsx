@@ -4,11 +4,13 @@ import { useAuthStore } from './../stores/authStore'
 import apiService from './../services/api'
 import SchemaCard from './../components/schemas/SchemaCard'
 import CreateSchemaModal from './../modals/CreateSchemaModal'
+import EditSchemaModal from './../modals/EditSchemaModal'
 import { Plus, AlertCircle } from 'lucide-react'
 
 export default function Schemas() {
   const token = useAuthStore((state) => state.token)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editingSchema, setEditingSchema] = useState(null)
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['schemas'],
@@ -69,10 +71,10 @@ export default function Schemas() {
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Schema Builder
+            Schema Management
           </h3>
           <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-            Visual schema builder coming soon. For now, use the form to create schemas.
+            Create schemas to define event types for your tracking. Each schema can track multiple event types like clicks, page views, and custom interactions.
           </p>
         </div>
       </div>
@@ -80,7 +82,7 @@ export default function Schemas() {
       {/* Schemas grid */}
       {schemas.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400">No schemas yet</p>
+          <p className="text-gray-500 dark:text-gray-400">No schemas yet. Create one to get started!</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -89,7 +91,7 @@ export default function Schemas() {
               key={schema.id}
               schema={schema}
               onDelete={() => handleDelete(schema.name)}
-              onEdit={() => alert('Edit coming soon')}
+              onEdit={() => setEditingSchema(schema)}
             />
           ))}
         </div>
@@ -101,6 +103,18 @@ export default function Schemas() {
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => {
             setShowCreateModal(false)
+            refetch()
+          }}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {editingSchema && (
+        <EditSchemaModal
+          schema={editingSchema}
+          onClose={() => setEditingSchema(null)}
+          onSuccess={() => {
+            setEditingSchema(null)
             refetch()
           }}
         />
